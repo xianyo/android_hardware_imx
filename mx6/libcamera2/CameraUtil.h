@@ -18,7 +18,7 @@
 #define _CAMERA_UTILS_H
 
 #undef LOG_TAG
-#define LOG_TAG "FslCameraHAL"
+#define LOG_TAG "FslCameraHAL2"
 #include <utils/Log.h>
 
 #include <string.h>
@@ -237,6 +237,11 @@ enum CAMERA_ERROR {
 class CameraErrorListener {
 public:
     virtual void handleError(int err) = 0;
+    virtual void sendNotification
+	    (int32_t msgType,
+	     int32_t ext1,
+	     int32_t ext2,
+	     int32_t ext3) = 0;
     virtual ~CameraErrorListener() {}
 };
 

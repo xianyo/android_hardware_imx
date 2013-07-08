@@ -16,6 +16,10 @@
 
 #include "Ov5642Csi.h"
 
+#define V4L2_CID_AUTO_FOCUS_START		(V4L2_CID_CAMERA_CLASS_BASE+28)
+#define V4L2_CID_AUTO_FOCUS_STOP		(V4L2_CID_CAMERA_CLASS_BASE+29)
+#define V4L2_CID_AUTO_FOCUS_STATUS		(V4L2_CID_CAMERA_CLASS_BASE+30)
+
 status_t Ov5642Csi::initSensorInfo(const CameraInfo& info)
 {
     if (mCameraHandle < 0) {
@@ -152,4 +156,16 @@ status_t Ov5642Csi::initSensorInfo(const CameraInfo& info)
     return NO_ERROR;
 }
 
+status_t Ov5642Csi::do_autoFocus(int trigger_id, int ext1, int ext2)
+{
+	struct v4l2_control c;
+	c.id=V4L2_CID_AUTO_FOCUS_START;
+	int res = ioctl(mCameraHandle,VIDIOC_S_CTRL,&c);
+	if (mErrorListener) {
+		mErrorListener->sendNotification(CAMERA2_MSG_AUTOFOCUS,ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED,trigger_id,ext1);
+	}
+	else
+		FLOGE("%s: no error listener\n", __func__);
+	return NO_ERROR;
+}
 

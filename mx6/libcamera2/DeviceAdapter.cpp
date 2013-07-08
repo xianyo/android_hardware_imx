@@ -489,6 +489,12 @@ status_t DeviceAdapter::stopDeviceLocked()
     return ret;
 }
 
+status_t DeviceAdapter::do_autoFocus(int trigger_id, int ext1, int ext2)
+{
+	FLOGE("%s: %d %d %d", __func__, trigger_id, ext1, ext2);
+	return NO_ERROR;
+}
+
 status_t DeviceAdapter::startPreview()
 {
     status_t ret = NO_ERROR;
@@ -649,30 +655,39 @@ int DeviceAdapter::deviceThread()
     return NO_ERROR;
 }
 
-status_t DeviceAdapter::autoFocus()
+status_t DeviceAdapter::autoFocus(int trigger_id,int ext1, int ext2)
 {
+    FLOGE("%s: %d,%d,%d\n", __func__,trigger_id,ext1, ext2);
     if (mAutoFocusThread != NULL) {
         mAutoFocusThread.clear();
     }
 
-    mAutoFocusThread = new AutoFocusThread(this);
+    mAutoFocusThread = new AutoFocusThread(this,trigger_id,ext1,ext2);
     if (mAutoFocusThread == NULL) {
         return UNKNOWN_ERROR;
+    }
+    FLOGE("%s: thread started\n", __func__);
+    return NO_ERROR;
+}
+
+status_t DeviceAdapter::cancelAutoFocus(int trigger_id,int ext1, int ext2)
+{
+    if (mAutoFocusThread != NULL) {
+        mAutoFocusThread.clear();
     }
     return NO_ERROR;
 }
 
-status_t DeviceAdapter::cancelAutoFocus()
+int DeviceAdapter::autoFocusThread(int trigger_id,int ext1, int ext2)
 {
-    return NO_ERROR;
-}
+    FLOGE("%s: tid %d, e1 %d, e2 %d\n", __func__, trigger_id,ext1,ext2);
+    status_t stat = do_autoFocus(trigger_id, ext1, ext2);
 
-int DeviceAdapter::autoFocusThread()
-{
     sp<CameraEvent> cameraEvt = new CameraEvent();
     cameraEvt->mEventType = CameraEvent::EVENT_FOCUS;
     dispatchEvent(cameraEvt);
 
+    FLOGE("%s: dispatched EVENT_FOCUS: status %d\n", __func__, stat);
     // exit the thread.
     return UNKNOWN_ERROR;
 }
