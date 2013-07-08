@@ -224,12 +224,40 @@ int release_reprocess_stream(
     return INVALID_OPERATION;
 }
 
-int trigger_action(const struct camera2_device *,
-        uint32_t /*trigger_id*/,
-        int32_t /*ext1*/,
-        int32_t /*ext2*/)
+int trigger_action(const struct camera2_device * device,
+        uint32_t msgType,
+        int32_t ext1,
+        int32_t ext2)
 {
-    return INVALID_OPERATION;
+    int ret = INVALID_OPERATION;
+    CameraHal *camHal = fsl_get_camerahal(device);
+    DeviceAdapter *adap ;
+    ALOGI("%s:%s: msg %d, ext1 %d, ext2 %d\n",
+	  __FILE__, __func__,
+	  msgType, ext1, ext2);
+    switch (msgType) {
+        case CAMERA2_TRIGGER_AUTOFOCUS:
+	    adap = camHal? camHal->getDeviceAdapter() : 0;
+	    if (adap) {
+		    ret = adap->autoFocus(ext1,ext2,0);
+	    } else
+		    ALOGE("NO hal %p or adapter\n", camHal);
+            break;
+        case CAMERA2_TRIGGER_CANCEL_AUTOFOCUS:
+	    adap = camHal? camHal->getDeviceAdapter() : 0;
+	    if (adap) {
+		    ret = adap->cancelAutoFocus(ext1,ext2,0);
+	    } else
+		    ALOGE("NO hal %p or adapter\n", camHal);
+            break;
+        case CAMERA2_TRIGGER_PRECAPTURE_METERING:
+            ALOGE("TRIGGER_PRECAPTURE_METERING");
+            break;
+        default:
+            ALOGE("%s: Unknown action triggered: %d (arguments %d %d)",
+                    __FUNCTION__, msgType, ext1, ext2);
+    }
+    return ret;
 }
 
 int set_notify_callback(const struct camera2_device *device,

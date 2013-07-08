@@ -61,8 +61,8 @@ public:
     virtual void setPreviewPixelFormat();
     virtual void setPicturePixelFormat();
 
-    status_t         autoFocus();
-    status_t         cancelAutoFocus();
+    status_t         autoFocus(int trigger_id,int ext1, int ext2);
+    status_t         cancelAutoFocus(int trigger_id,int ext1, int ext2);
 
     virtual status_t startPreview();
     virtual status_t stopPreview();
@@ -81,8 +81,13 @@ protected:
 protected:
     class AutoFocusThread : public Thread {
     public:
-        AutoFocusThread(DeviceAdapter *hw) :
-            Thread(false), mAdapter(hw) {}
+        AutoFocusThread(DeviceAdapter *hw,
+			int trigger_id,int ext1, int ext2) :
+            Thread(false)
+		, mAdapter(hw)
+		, tid(trigger_id)
+		, e1(ext1)
+		, e2(ext2) {}
 
         virtual void onFirstRef() {
             run("AutoFocusThread", PRIORITY_URGENT_DISPLAY);
@@ -91,7 +96,7 @@ protected:
         virtual bool threadLoop() {
             int ret = 0;
 
-            ret = mAdapter->autoFocusThread();
+            ret = mAdapter->autoFocusThread(tid,e1,e2);
             if (ret != 0) {
                 return false;
             }
@@ -102,6 +107,7 @@ protected:
 
     private:
         DeviceAdapter *mAdapter;
+	int	tid, e1, e2;
     };
 
     class DeviceThread : public Thread {
@@ -136,9 +142,11 @@ protected:
     virtual status_t startDeviceLocked();
     virtual status_t stopDeviceLocked();
 
+    virtual status_t do_autoFocus(int trigger_id, int ext1, int ext2);
+
 private:
     int          deviceThread();
-    int          autoFocusThread();
+    int          autoFocusThread(int trigger_id,int ext1, int ext2);
 
 protected:
     CameraBufferProvider *mBufferProvider;

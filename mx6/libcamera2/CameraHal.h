@@ -64,13 +64,18 @@ public:
     int get_metadata_vendor_tag_ops(vendor_tag_query_ops_t **ops);
     int set_notify_callback(camera2_notify_callback notify_cb,
             void *user);
-
+    virtual void sendNotification
+		(int32_t msgType,
+		 int32_t ext1,
+		 int32_t ext2,
+		 int32_t ext3);
     void     release();
     status_t dump(int fd) const;
 
     void     LockWakeLock();
     void     UnLockWakeLock();
 
+    DeviceAdapter *getDeviceAdapter();
 private:
     bool mPowerLock;
     int  mCameraId;

@@ -85,6 +85,19 @@ void RequestManager::handleError(int err)
     }
 }
 
+void RequestManager::sendNotification
+	(int32_t msgType,
+	 int32_t ext1,
+	 int32_t ext2,
+	 int32_t ext3)
+{
+    if (mErrorListener != NULL) {
+        mErrorListener->sendNotification(msgType,ext1,ext2,ext3);
+    }
+    else
+        FLOGE("%s: no Error listener\n", __func__);
+}
+
 void RequestManager::stopStream(int id)
 {
     sp<StreamAdapter> cameraStream = mStreamAdapter[id];
@@ -500,4 +513,9 @@ void RequestManager::release()
         }
     }
     FLOG_TRACE("RequestManager %s end...", __FUNCTION__);
+}
+
+DeviceAdapter *RequestManager::getDeviceAdapter()
+{
+	return mDeviceAdapter.get();
 }

@@ -133,6 +133,19 @@ int CameraHal::set_notify_callback(camera2_notify_callback notify_cb,
     return NO_ERROR;
 }
 
+void CameraHal::sendNotification
+	(int32_t msgType,
+         int32_t ext1,
+         int32_t ext2,
+         int32_t ext3)
+{
+    if (mNotifyCb) {
+        mNotifyCb(msgType, ext1, ext2, ext3, mNotifyUserPtr);
+    }
+    else
+	    FLOGE("%s: no callback for msg %d/%d/%d\n", __func__, msgType,ext1,ext2,ext3);
+}
+
 status_t CameraHal::initialize(CameraInfo& info)
 {
     status_t ret = NO_ERROR;
@@ -181,3 +194,11 @@ status_t CameraHal::dump(int /*fd*/) const
     return NO_ERROR;
 }
 
+DeviceAdapter *CameraHal::getDeviceAdapter()
+{
+	if (0 != mRequestManager.get()) {
+		return mRequestManager->getDeviceAdapter();
+	}
+	else
+		return 0;
+}
