@@ -71,6 +71,8 @@ public:
     void release();
     void setErrorListener(CameraErrorListener *listener);
 
+    DeviceAdapter *getDeviceAdapter();
+
     class RequestHandleThread : public Thread {
     public:
         RequestHandleThread(RequestManager *rm) :
@@ -90,6 +92,11 @@ private:
     void stopAllStreams();
     bool isStreamValid(int requestType, int streamId, int videoSnap);
     void handleError(int err);
+    void sendNotification
+		(int32_t msgType,
+		 int32_t ext1,
+		 int32_t ext2,
+		 int32_t ext3);
 
 private:
     sp<DeviceAdapter>  mDeviceAdapter;
