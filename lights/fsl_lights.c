@@ -24,6 +24,7 @@
 #include <cutils/log.h>
 #include <cutils/atomic.h>
 #include <cutils/properties.h>
+#include <ctype.h>
 
 #define MAX_BRIGHTNESS 255
 #define DEF_BACKLIGHT_DEV "pwm-backlight"
@@ -125,7 +126,10 @@ static int lights_device_open(const struct hw_module_t* module,
     ALOGV("lights_device_open\n");
     if (!strcmp(name, LIGHT_ID_BACKLIGHT)) {
         struct light_device_t *dev;
+	int fdfb0;
         char value[PROPERTY_VALUE_MAX];
+	char fbtype[256];
+	char *fbmatch;
 
         dev = malloc(sizeof(*dev));
 
@@ -142,12 +146,45 @@ static int lights_device_open(const struct hw_module_t* module,
 
         *device = &dev->common;
 
+	strcpy(fbtype,"ldb"); /* default */
+	fdfb0 = open("/sys/class/graphics/fb0/fsl_disp_dev_property", O_RDONLY);
+	if (0 <= fdfb0) {
+		char buf[256];
+		int len;
+		if (0 < (len=read(fdfb0,buf,sizeof(buf)-1))) {
+			int i;
+			buf[len] = '\0';
+			for (i=0; i < len; i++) {
+				if (!isprint(buf[i])) {
+					buf[i] = '\0';
+					strcpy(fbtype,buf);
+					break;
+				}
+			}
+		}
+		else
+			buf[0]=0;
+		close(fdfb0);
+	}
         property_get("hw.backlight.dev", value, DEF_BACKLIGHT_DEV);
+        fbmatch = strstr(value,fbtype);
+	if (fbmatch) {
+		char *end;
+		fbmatch += strlen(fbtype)+1;
+		end=fbmatch;
+		while (*end &&
+		       (',' != *end) &&
+		       (' ' != *end) &&
+		       (';' != *end))
+			end++;
+		*end = 0;
+		memcpy(value,fbmatch,end-fbmatch+1);
+	}
         strcpy(path, DEF_BACKLIGHT_PATH);
-        strcat(path, value);
-        strcpy(max_path, path);
-        strcat(max_path, "/max_brightness");
-        strcat(path, "/brightness");
+	strcat(path, value);
+	strcpy(max_path, path);
+	strcat(max_path, "/max_brightness");
+	strcat(path, "/brightness");
 
         ALOGI("max backlight file is %s\n", max_path);
         ALOGI("backlight brightness file is %s\n", path);
