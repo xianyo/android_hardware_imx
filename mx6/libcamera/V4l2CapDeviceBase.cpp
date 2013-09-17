@@ -147,6 +147,7 @@ namespace android{
     CAPTURE_DEVICE_ERR_RET V4l2CapDeviceBase :: DevAllocateBuf(DMA_BUFFER *DevBufQue, unsigned int *pBufQueNum){
 
         CAMERA_HAL_LOG_FUNC;
+
         if (mCameraDevice <= 0){
             return CAPTURE_DEVICE_ERR_OPEN;
         }else
@@ -468,7 +469,7 @@ namespace android{
             CAMERA_HAL_LOG_RUNTIME(" pixelformat = %x\n", fmt.fmt.pix.pixelformat);
         }
         pCapcfg->framesize = fmt.fmt.pix.sizeimage;
-        pCapcfg->picture_waite_number = 1; //For uvc, the first frame is ok.
+        pCapcfg->picture_waite_number = 10; //embest
 
         return CAPTURE_DEVICE_ERR_NONE;
     }
@@ -540,7 +541,7 @@ namespace android{
         memset(&req, 0, sizeof (req));
         req.count = mBufQueNum;
         req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        req.memory = V4L2_MEMORY_USERPTR;
+        req.memory = V4L2_MEMORY_MMAP;
         if (ioctl(mCameraDevice, VIDIOC_REQBUFS, &req) < 0) {
             CAMERA_HAL_ERR("v4l_capture_setup: VIDIOC_REQBUFS failed\n");
             return CAPTURE_DEVICE_ERR_SYS_CALL;
@@ -552,7 +553,7 @@ namespace android{
         for (i = 0; i < mBufQueNum; i++) {
             memset(&buf, 0, sizeof (buf));
             buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            buf.memory = V4L2_MEMORY_USERPTR;
+            buf.memory = V4L2_MEMORY_MMAP;
             buf.index = i;
             buf.m.offset = mCaptureBuffers[i].phy_offset = DevBufQue[i].phy_offset;
             buf.length = mCaptureBuffers[i].length = DevBufQue[i].length;
@@ -579,7 +580,7 @@ namespace android{
         for (unsigned int i = 0; i < mBufQueNum; i++) {
             memset(&buf, 0, sizeof (struct v4l2_buffer));
             buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            buf.memory = V4L2_MEMORY_USERPTR;
+            buf.memory = V4L2_MEMORY_MMAP;
             buf.index = i;
             buf.m.offset = mCaptureBuffers[i].phy_offset;
 
@@ -619,7 +620,7 @@ namespace android{
         }
         memset(&cfilledbuffer, 0, sizeof (cfilledbuffer));
         cfilledbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        cfilledbuffer.memory = V4L2_MEMORY_USERPTR;
+        cfilledbuffer.memory = V4L2_MEMORY_MMAP;
         ret = ioctl(mCameraDevice, VIDIOC_DQBUF, &cfilledbuffer);
         if (ret < 0) {
             CAMERA_HAL_ERR("Camera VIDIOC_DQBUF failure, ret=%d", ret);
@@ -640,11 +641,11 @@ namespace android{
         }
         memset(&cfilledbuffer, 0, sizeof (struct v4l2_buffer));
         cfilledbuffer.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        cfilledbuffer.memory = V4L2_MEMORY_USERPTR;
+        cfilledbuffer.memory = V4L2_MEMORY_MMAP;
         cfilledbuffer.index = BufQueIdx;
         ret = ioctl(mCameraDevice, VIDIOC_QBUF, &cfilledbuffer);
         if (ret < 0) {
-            CAMERA_HAL_ERR("Camera VIDIOC_DQBUF failure, ret=%d", ret);
+            CAMERA_HAL_ERR("Camera VIDIOC_QBUF failure, ret=%d", ret);
             return CAPTURE_DEVICE_ERR_SYS_CALL;
         }
         mQueuedBufNum ++;

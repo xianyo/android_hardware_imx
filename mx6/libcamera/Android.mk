@@ -26,8 +26,9 @@ LOCAL_SRC_FILES:=    \
 	PostProcessDeviceInterface.cpp \
 	PP_ipulib.cpp    \
 	JpegEncoderInterface.cpp \
-    JpegEncoderSoftware.cpp \
-    messageQueue.cpp
+    	JpegEncoderSoftware.cpp \
+    	messageQueue.cpp \
+	converter.cpp
 
 LOCAL_CPPFLAGS +=
 
@@ -41,7 +42,7 @@ LOCAL_SHARED_LIBRARIES:= \
     libhardware_legacy \
     libdl \
     libc \
-	libipu
+    libipu
 
 LOCAL_C_INCLUDES += \
 	frameworks/base/include/binder \

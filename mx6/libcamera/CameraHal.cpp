@@ -21,6 +21,7 @@
 
 #include <cutils/properties.h>
 #include "CameraHal.h"
+#include "converter.h"
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
@@ -57,7 +58,7 @@ namespace android {
         mVideoBufNume(VIDEO_OUTPUT_BUFFER_NUM),
         mPPbufNum(0),
         mPreviewRunning(0), mCaptureRunning(0),
-        mDefaultPreviewFormat(V4L2_PIX_FMT_NV12), //the optimized selected format, hard code
+        mDefaultPreviewFormat(V4L2_PIX_FMT_YUYV), //embest
         mPreviewFrameSize(0),
         mTakePicFlag(false),
         mUvcSpecialCaptureFormat(V4L2_PIX_FMT_YUYV),
@@ -157,7 +158,7 @@ namespace android {
         CAMERA_TYPE cType;
         mCaptureDevice->GetDevType(&cType);
         if(cType == CAMERA_TYPE_UVC) {
-            mPPDeviceNeed = true;
+            mPPDeviceNeed = false; //embest
             CAMERA_HAL_LOG_INFO("-----%s: it is uvc device", __FUNCTION__);
         }else {
             mPPDeviceNeed = false;
@@ -197,7 +198,7 @@ namespace android {
                 mSupportedPreviewSizes == NULL ||
                 mSupportedFPS          == NULL ||
                 mSupprotedThumbnailSizes == NULL ||
-                mSupportPreviewFormat == NULL)
+                mSupportPreviewFormat == NULL) 
             ret = CAMERA_HAL_ERR_ALLOC_BUF;
 
         return ret;
@@ -300,10 +301,10 @@ namespace android {
                 strcat(fmtStr, "yuv420sp");
                 strcat(fmtStr, ",");
             }
-            //else if(mCaptureSupportedFormat[i] == v4l2_fourcc('Y','U','Y','V')) {
-            //    strcat(fmtStr, "yuv422i-yuyv");
-            //    strcat(fmtStr, ",");
-            //}
+            else if(mCaptureSupportedFormat[i] == v4l2_fourcc('Y','U','Y','V')) {
+                strcat(fmtStr, "yuv422i-yuyv");
+                strcat(fmtStr, ",");
+            }
         }
         mParameters.set(CameraParameters::KEY_SUPPORTED_PREVIEW_FORMATS, fmtStr);
         return CAMERA_HAL_ERR_NONE;
@@ -617,11 +618,12 @@ namespace android {
             CAMERA_HAL_ERR("Invalid zoom setting, zoom %d, max zoom %d",zoom,max_zoom);
             return BAD_VALUE;
         }
+
         if (!((strcmp(params.getPreviewFormat(), "yuv420sp") == 0) ||
-                (strcmp(params.getPreviewFormat(), "yuv420p") == 0)/* || (strcmp(params.getPreviewFormat(), "yuv422i-yuyv") == 0)*/
+                (strcmp(params.getPreviewFormat(), "yuv420p") == 0) || (strcmp(params.getPreviewFormat(), "yuv422i-yuyv") == 0)
                 )) {
-            CAMERA_HAL_ERR("Only yuv420sp or yuv420pis supported, but input format is %s", params.getPreviewFormat());
-            //CAMERA_HAL_ERR("Only yuv420sp,yuv420p or yuv422i-yuyv is supported, but input format is %s", params.getPreviewFormat());
+//            CAMERA_HAL_ERR("Only yuv420sp or yuv420pis supported, but input format is %s", params.getPreviewFormat());
+            CAMERA_HAL_ERR("Only yuv420sp,yuv420p or yuv422i-yuyv is supported, but input format is %s", params.getPreviewFormat());
             return BAD_VALUE;
         }
 
@@ -758,7 +760,7 @@ namespace android {
         }
         status_t err = mNativeWindow->set_buffers_geometry(mNativeWindow,
                 mCaptureDeviceCfg.width, mCaptureDeviceCfg.height, 
-                HAL_PIXEL_FORMAT_YCbCr_420_SP);//mCaptureDeviceCfg.fmt);
+                /*HAL_PIXEL_FORMAT_YCbCr_420_SP*/HAL_PIXEL_FORMAT_RGB_565); //embest
         if(err != 0){
             CAMERA_HAL_ERR("native_window_set_buffers_geometry failed:%s(%d)", 
                     strerror(-err), -err);
@@ -788,12 +790,12 @@ namespace android {
 
         unsigned int i;
         Rect bounds(mCaptureDeviceCfg.width, mCaptureDeviceCfg.height);
-        void *pVaddr = NULL;
+//        void *pVaddr = NULL;
         GraphicBufferMapper &mapper = GraphicBufferMapper::get();
         for(i = 0; i < mCaptureBufNum; i++) {
             android_native_buffer_t *buf = NULL;
             buffer_handle_t* buf_h = NULL;
-            pVaddr = NULL;
+	    pVaddr[i] = NULL;
             int stride;
             err = mNativeWindow->dequeue_buffer(mNativeWindow, &buf_h, &stride);
             if((err != 0) || (buf_h == NULL)) {
@@ -801,8 +803,9 @@ namespace android {
                 return BAD_VALUE;
             }
             buf = container_of(buf_h, ANativeWindowBuffer, handle);
+
             private_handle_t *handle = (private_handle_t *)buf->handle;
-            mapper.lock(handle, GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN, bounds, &pVaddr);
+            mapper.lock(handle, GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN, bounds, &pVaddr[i]); //embest
 
             if((handle->phys == 0) || (handle->base == 0) || (handle->size == 0)) {
                  CAMERA_HAL_ERR("%s: dequeue invalide Buffer, phys=%x, base=%x, size=%d", __FUNCTION__, handle->phys, handle->base, handle->size);
@@ -810,10 +813,12 @@ namespace android {
                  return BAD_VALUE;
             }
 
+#if 0 //embest
             mCaptureBuffers[i].virt_start = (unsigned char *)handle->base;
             mCaptureBuffers[i].phy_offset = handle->phys;
             //Calculate the buffer size, for GPU doesn't reply this value.
             mCaptureBuffers[i].length =  mCaptureDeviceCfg.width * mCaptureDeviceCfg.height * 3 / 2;
+#endif
             mCaptureBuffers[i].native_buf = (void *)buf;
             mCaptureBuffers[i].refCount = 0;
             mCaptureBuffers[i].buf_state = WINDOW_BUFS_DEQUEUED;
@@ -1097,9 +1102,10 @@ namespace android {
         int ret = NO_ERROR;
         unsigned int DeQueBufIdx = 0;
         struct jpeg_encoding_conf JpegEncConf;
-        DMA_BUFFER *Buf_input, Buf_output;
-        camera_memory_t* JpegMemBase = NULL;
+        DMA_BUFFER *Buf_input, Buf_output, Buf_temp;
+        camera_memory_t *JpegMemBase = NULL;
         camera_memory_t *RawMemBase = NULL;
+	camera_memory_t *TempMemBase = NULL;
 
         int  max_fps, min_fps;
 
@@ -1138,8 +1144,10 @@ namespace android {
                 return ret;
             }
         }
-        if ((ret = PrepareCaptureDevices()) < 0)
+        if ((ret = PrepareCaptureDevices()) < 0) {
+	    CAMERA_HAL_ERR("PrepareCaptureDevices error ");
             return ret;
+	}
 
         if (mPPDeviceNeedForPic){
             if ((ret = PreparePreviwBuf()) < 0){
@@ -1156,8 +1164,14 @@ namespace android {
             goto Pic_out;
         }
 
+        TempMemBase = mRequestMemory(-1, mCaptureFrameSize, 1, NULL);
+        if (TempMemBase == NULL || TempMemBase->data == NULL){
+            ret = NO_MEMORY;
+            goto Pic_out;
+        }
+
         if (mCaptureDevice->DevStart()<0){
-            CAMERA_HAL_ERR("the capture start up failed !!!!");
+	    CAMERA_HAL_ERR("the capture start up failed !!!!"); 
             return INVALID_OPERATION;
         }
 
@@ -1186,6 +1200,9 @@ namespace android {
             Buf_input = &mPPbuf[0];
         }else{
             Buf_input = &mCaptureBuffers[DeQueBufIdx];
+	    Buf_temp.virt_start = (unsigned char *)(TempMemBase->data);
+	    convertYUYVtoYU12((unsigned char *)(Buf_input->virt_start), (unsigned char *)(Buf_temp.virt_start), 
+				mCaptureDeviceCfg.width, mCaptureDeviceCfg.height); //embest
         }
 
         Buf_output.virt_start = (unsigned char *)(JpegMemBase->data);
@@ -1223,23 +1240,29 @@ namespace android {
                 mNotifyCb(CAMERA_MSG_RAW_IMAGE_NOTIFY, 0, 0, mCallbackCookie);
         }
  
-        if (mJpegEncoder->DoEncode(Buf_input,&Buf_output,&JpegEncConf) < 0){
+        if (mJpegEncoder->DoEncode(/*Buf_input*/&Buf_temp,&Buf_output,&JpegEncConf) < 0){
             ret = UNKNOWN_ERROR;
             goto Pic_out;
         }
 
 Pic_out:
-        freeBuffersToNativeWindow();
         if ((JpegMemBase != NULL) &&(JpegMemBase->data != NULL) && (mMsgEnabled & CAMERA_MSG_COMPRESSED_IMAGE)) {
             CAMERA_HAL_LOG_INFO("==========CAMERA_MSG_COMPRESSED_IMAGE==================");
             mDataCb(CAMERA_MSG_COMPRESSED_IMAGE, JpegMemBase, 0, NULL, mCallbackCookie);
         }
 
         mCaptureDevice->DevStop();
+	mCaptureDevice->DevDeAllocate(); //embest
+	freeBuffersToNativeWindow();
 
         if(JpegMemBase) {
             JpegMemBase->release(JpegMemBase);
         }
+
+	if(TempMemBase) {
+	    TempMemBase->release(TempMemBase);
+	}	
+
         if(mWaitForTakingPicture) {
             sem_post(&mTakingPicture);
         }
@@ -1290,7 +1313,7 @@ Pic_out:
             if (mPictureEncodeFormat == 0){
                 mPictureEncodeFormat = mEncoderSupportedFormat[0];
                 mCaptureDeviceCfg.fmt = mUvcSpecialCaptureFormat; //For uvc now, IPU only can support yuyv.
-                mPPDeviceNeedForPic = true;
+                mPPDeviceNeedForPic = /*true*/false; //embest
                 CAMERA_HAL_LOG_INFO("Need to do the CSC for Jpeg encoder");
                 CAMERA_HAL_LOG_INFO(" Get the captured format is :%c%c%c%c\n",
                         mCaptureDeviceCfg.fmt & 0xFF, (mCaptureDeviceCfg.fmt >> 8) & 0xFF,
@@ -1554,9 +1577,9 @@ Pic_out:
         else if(format == v4l2_fourcc('N','V','1','2')) {
             strcpy(pStr, "yuv420sp");
         }
-        //else if(format == v4l2_fourcc('Y','U','Y','V')) {
-        //    strcpy(pStr, "yuv422i-yuyv");
-        //}
+        else if(format == v4l2_fourcc('Y','U','Y','V')) {
+            strcpy(pStr, "yuv422i-yuyv");
+        }
         else {
             CAMERA_HAL_ERR("%s: Only YU12 or NV12 is supported", __FUNCTION__);
             return BAD_VALUE;
@@ -1573,9 +1596,9 @@ Pic_out:
         else if(!strcmp(mParameters.getPreviewFormat(), "yuv420sp")) {
             *pFormat = v4l2_fourcc('N','V','1','2');
         }
-        //else if(!strcmp(mParameters.getPreviewFormat(), "yuv422i-yuyv")) {
-        //    *pFormat = v4l2_fourcc('Y','U','Y','V');
-        //}
+        else if(!strcmp(mParameters.getPreviewFormat(), "yuv422i-yuyv")) {
+            *pFormat = v4l2_fourcc('Y','U','Y','V');
+        }
         else {
             CAMERA_HAL_ERR("Only yuv420sp or yuv420p is supported");
             return BAD_VALUE;
@@ -1714,7 +1737,7 @@ Pic_out:
         if(mPPDeviceNeed){
         }
         mCaptureDevice->DevStop();
-        //mCaptureDevice->DevDeAllocate();
+        mCaptureDevice->DevDeAllocate(); //embest
         freeBuffersToNativeWindow();
         //CloseCaptureDevice();
         //mCaptureBufNum = 0;
@@ -1734,10 +1757,17 @@ Pic_out:
             return BAD_VALUE;
         }
 
+#if 0 //embest
         if (mCaptureDevice->DevRegisterBufs(mCaptureBuffers,&CaptureBufNum)< 0){
             CAMERA_HAL_ERR("capture device allocat buf error");
             return BAD_VALUE;
         }
+#else
+	if (mCaptureDevice->DevAllocateBuf(mCaptureBuffers,&CaptureBufNum)< 0) {
+	    CAMERA_HAL_ERR("capture device allocat buf error");
+	    return BAD_VALUE;
+	}	
+#endif
         if(mCaptureBufNum != CaptureBufNum){
             CAMERA_HAL_LOG_INFO("The driver can only supply %d bufs, but required %d bufs", CaptureBufNum, mCaptureBufNum);
         }
@@ -1748,6 +1778,7 @@ Pic_out:
             CAMERA_HAL_ERR("capture device prepare error");
             return BAD_VALUE;
         }
+
         nCameraBuffersQueued = mCaptureBufNum;
         isCaptureBufsAllocated = 1;
 
@@ -1864,14 +1895,14 @@ Pic_out:
         is_first_buffer = 1;
         last_display_index = 0;
 
-        //for(unsigned int i=0; i < mCaptureBufNum; i++) {
-        //    mCaptureThreadQueue.postMessage(new CMessage(CMESSAGE_TYPE_NORMAL, i));
-        //}
-//        sem_init(&avab_dequeue_frame, 0, mCaptureBufNum);
-//        sem_init(&avab_show_frame, 0, 0);
-//        sem_init(&avab_enc_frame, 0, 0);
-//		sem_init(&avab_enc_frame_finish, 0, 0);
-		if(mPPDeviceNeed){
+//	for(unsigned int i=0; i < mCaptureBufNum; i++) {
+//    	    mCaptureThreadQueue.postMessage(new CMessage(CMESSAGE_TYPE_NORMAL, i));
+//	}
+//      sem_init(&avab_dequeue_frame, 0, mCaptureBufNum);
+//      sem_init(&avab_show_frame, 0, 0);
+//      sem_init(&avab_enc_frame, 0, 0);
+//	sem_init(&avab_enc_frame_finish, 0, 0);
+	if(mPPDeviceNeed){
             sem_init(&avab_pp_in_frame, 0, 0);
             sem_init(&avab_pp_out_frame, 0, mPPbufNum);
         }
@@ -2138,7 +2169,7 @@ Pic_out:
         return ret;
     }
 
-    static void bufferDump(DMA_BUFFER *pBufs)
+    static void bufferDump(DMA_BUFFER *pInBuf)
     {
 #ifdef FSL_CAMERAHAL_DUMP
             //for test code
@@ -2149,9 +2180,9 @@ Pic_out:
                 vflg = 1;
             if(vflg){
                 FILE *pf = NULL;
-                pf = fopen("/sdcard/camera_tst.data", "wb");
+                pf = fopen("/data/camera_tst.data", "wb");
                 if(pf == NULL) {
-                    CAMERA_HAL_ERR("open /sdcard/camera_tst.data failed");
+                    CAMERA_HAL_ERR("open /data/camera_tst.data failed");
                 }
                 else {
                     fwrite(pInBuf->virt_start, pInBuf->length, 1, pf);
@@ -2195,17 +2226,19 @@ Pic_out:
                 }else {
                     pInBuf = &mPPbuf[display_index];
                 }
-                
+
                 if (mMsgEnabled & CAMERA_MSG_PREVIEW_FRAME) {
-                    //CAMERA_HAL_ERR("*******CAMERA_MSG_PREVIEW_FRAME*******");
+		    //CAMERA_HAL_ERR("*******CAMERA_MSG_PREVIEW_FRAME*******");
                     convertNV12toYUV420SP((uint8_t*)(pInBuf->virt_start),
                             (uint8_t*)((unsigned char*)mPreviewMemory->data + preview_heap_buf_head*mPreviewFrameSize),mCaptureDeviceCfg.width, mCaptureDeviceCfg.height);
                     mDataCb(CAMERA_MSG_PREVIEW_FRAME, mPreviewMemory, preview_heap_buf_head, NULL, mCallbackCookie);
                     preview_heap_buf_head ++;
                     preview_heap_buf_head %= mPreviewHeapBufNum;
                 }                
-
+	
                 if (mNativeWindow != 0) {
+                    convertYUYVtoRGB565((unsigned char *)pInBuf->virt_start,(unsigned char *)pVaddr[display_index], mCaptureDeviceCfg.width, mCaptureDeviceCfg.height); //embest
+
                     if (mNativeWindow->enqueue_buffer(mNativeWindow, &((android_native_buffer_t * )pInBuf->native_buf)->handle) < 0){
                         CAMERA_HAL_ERR("queueBuffer failed. May be bcos stream was not turned on yet.");
                         mPreviewRunning = false;
@@ -2401,37 +2434,6 @@ Pic_out:
             mPowerLock = false;
         }
     }
-
-    void CameraHal::convertNV12toYUV420SP(uint8_t *inputBuffer, uint8_t *outputBuffer, int width, int height)
-    {
-        /* Color space conversion from I420 to YUV420SP */
-        int Ysize = 0, UVsize = 0;
-        uint8_t *Yin, *Uin, *Vin, *Yout, *Uout, *Vout;
-
-        Ysize = width * height;
-        UVsize = width *  height >> 2;
-
-        Yin = inputBuffer;
-        Uin = Yin + Ysize;
-        Vin = Uin + 1;
-
-        Yout = outputBuffer;
-        Vout = Yout + Ysize;
-        Uout = Vout + 1;
-
-        memcpy(Yout, Yin, Ysize);
-
-        for(int k = 0; k < UVsize; k++) {
-            *Uout = *Uin;
-            *Vout = *Vin;
-            Uout += 2;
-            Vout += 2;
-            Uin  += 2;
-            Vin += 2;
-        }
-    }
-
-
 
     int CameraHal::stringTodegree(char* cAttribute, unsigned int &degree, unsigned int &minute, unsigned int &second)
     {

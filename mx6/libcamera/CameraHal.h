@@ -274,7 +274,6 @@ namespace android {
         int cameraHALTakePicture();
         void CameraHALStopMisc();
         int PrepareJpegEncoder();
-        void convertNV12toYUV420SP(uint8_t *inputBuffer, uint8_t *outputBuffer, int width, int height);
 
         int stringTodegree(char* cAttribute, unsigned int &degree, unsigned int &minute, unsigned int &second);
 
@@ -350,6 +349,7 @@ namespace android {
         char *mSupportedFPS;
         char *mSupprotedThumbnailSizes;
         char *mSupportPreviewFormat;
+	void *pVaddr[PREVIEW_CAPTURE_BUFFER_NUM];
 
         preview_stream_ops_t*   mNativeWindow;
         unsigned int        mMsgEnabled;
