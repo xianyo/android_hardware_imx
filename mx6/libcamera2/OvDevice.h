@@ -20,11 +20,6 @@
 #include "CameraUtil.h"
 #include "DeviceAdapter.h"
 
-#define DEFAULT_PREVIEW_FPS (15)
-#define DEFAULT_PREVIEW_W   (640)
-#define DEFAULT_PREVIEW_H   (480)
-#define DEFAULT_PICTURE_W   (640)
-#define DEFAULT_PICTURE_H   (480)
 #define FORMAT_STRING_LEN 64
 
 class OvDevice : public DeviceAdapter {
