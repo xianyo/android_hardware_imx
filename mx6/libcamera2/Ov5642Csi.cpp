@@ -16,10 +16,6 @@
 
 #include "Ov5642Csi.h"
 
-#define V4L2_CID_AUTO_FOCUS_START		(V4L2_CID_CAMERA_CLASS_BASE+28)
-#define V4L2_CID_AUTO_FOCUS_STOP		(V4L2_CID_CAMERA_CLASS_BASE+29)
-#define V4L2_CID_AUTO_FOCUS_STATUS		(V4L2_CID_CAMERA_CLASS_BASE+30)
-
 status_t Ov5642Csi::initSensorInfo(const CameraInfo& /*info*/)
 {
     if (mCameraHandle < 0) {
