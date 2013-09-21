@@ -22,6 +22,8 @@
 class Ov5640Mipi : public OvDevice {
 public:
     virtual status_t initSensorInfo(const CameraInfo& info);
+protected:
+    virtual status_t do_autoFocus(int trigger_id, int ext1, int ext2);
 };
 
 #endif // ifndef _OV_DEVICE_H_
