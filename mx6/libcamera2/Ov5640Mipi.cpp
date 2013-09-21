@@ -16,7 +16,6 @@
 
 #include "Ov5640Mipi.h"
 
-
 status_t Ov5640Mipi::initSensorInfo(const CameraInfo& info)
 {
     if (mCameraHandle < 0) {
@@ -148,4 +147,16 @@ status_t Ov5640Mipi::initSensorInfo(const CameraInfo& info)
     return NO_ERROR;
 }
 
+status_t Ov5640Mipi::do_autoFocus(int trigger_id, int ext1, int ext2)
+{
+	struct v4l2_control c;
+	c.id=V4L2_CID_AUTO_FOCUS_START;
+	int res = ioctl(mCameraHandle,VIDIOC_S_CTRL,&c);
+	if (mErrorListener) {
+		mErrorListener->sendNotification(CAMERA2_MSG_AUTOFOCUS,ANDROID_CONTROL_AF_STATE_NOT_FOCUSED_LOCKED,trigger_id,ext1);
+	}
+	else
+		FLOGE("%s: no error listener\n", __func__);
+	return NO_ERROR;
+}
 
