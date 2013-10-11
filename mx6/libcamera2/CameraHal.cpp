@@ -143,7 +143,7 @@ void CameraHal::sendNotification
         mNotifyCb(msgType, ext1, ext2, ext3, mNotifyUserPtr);
     }
     else
-	    FLOGE("%s: no callback for msg %d/%d/%d\n", __func__, msgType,ext1,ext2,ext3);
+	    FLOGE("%s: no callback for msg %d/%d/%d/%d\n", __func__, msgType,ext1,ext2,ext3);
 }
 
 status_t CameraHal::initialize(CameraInfo& info)
