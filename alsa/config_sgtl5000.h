@@ -22,6 +22,7 @@
 
 #define MIXER_SGTL5000_JACK_FUNCTION                  "Jack Function"
 #define MIXER_SGTL5000_SPEAKER_VOLUME                 "PCM Playback Volume"
+#define MIXER_SGTL5000_HEADPHONE_VOLUME               "Headphone Playback Volume"
 
 /* These are values that never change */
 static struct route_setting defaults_SGTL5000[] = {
@@ -33,6 +34,10 @@ static struct route_setting defaults_SGTL5000[] = {
     {
         .ctl_name = MIXER_SGTL5000_SPEAKER_VOLUME,
         .intval = 156,
+    },
+    {
+        .ctl_name = MIXER_SGTL5000_HEADPHONE_VOLUME,
+        .intval = 127,
     },
     {
         .ctl_name = NULL,
