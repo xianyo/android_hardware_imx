@@ -91,6 +91,7 @@
 #define PRODUCT_NAME_PROPERTY   "ro.product.name"
 #define PRODUCT_DEVICE_IMX      "imx"
 #define PRODUCT_DEVICE_AUTO     "sabreauto"
+#define PROPERTY_HDMI		"sys.hdmi"
 
 /*"null_card" must be in the end of this array*/
 struct audio_card *audio_card_list[] = {
@@ -489,11 +490,18 @@ static int get_card_for_device(struct imx_audio_device *adev, int device, unsign
 {
     int i;
     int card = -1;
+    char property[PROPERTY_VALUE_MAX];
+    property_get(PROPERTY_HDMI, property, "");
 
+    /* use low bit of sys.hdmi property (will be zero if not set) */
+    #define ISHDMI() (property[0]&1)
     if (flag == PCM_OUT ) {
         for(i = 0; i < MAX_AUDIO_CARD_NUM; i++) {
-            if(adev->card_list[i]->supported_out_devices & device) {
-                  card = adev->card_list[i]->card;
+            struct audio_card *thiscard = adev->card_list[i];
+            if((thiscard->supported_out_devices & device)
+	       &&
+	       (!ISHDMI() || strstr(thiscard->name, "hdmi"))) {
+                  card = thiscard->card;
                   break;
             }
         }
