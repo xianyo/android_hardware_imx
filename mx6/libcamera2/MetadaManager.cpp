@@ -639,11 +639,12 @@ status_t MetadaManager::createStaticInfo(camera_metadata_t **info, bool sizeRequ
             tag, data, count) ) != OK ) return ret
 
     // android.lens
-    static float minFocusDistance = 0;
+    static float minFocusDistance = 1.0/0.05 ; /* 5cm */
     ADD_OR_SIZE(ANDROID_LENS_INFO_MINIMUM_FOCUS_DISTANCE,
             &minFocusDistance, 1);
+    static float hypFocusDistance = 1.0/0.05 ; /* 5cm */
     ADD_OR_SIZE(ANDROID_LENS_INFO_HYPERFOCAL_DISTANCE,
-            &minFocusDistance, 1);
+            &hypFocusDistance, 1);
 
     ADD_OR_SIZE(ANDROID_LENS_INFO_AVAILABLE_FOCAL_LENGTHS,
             &mSensorInfo->mFocalLength, 1);
