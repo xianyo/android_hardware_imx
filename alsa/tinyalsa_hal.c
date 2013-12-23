@@ -46,7 +46,7 @@
 #include "config_nullcard.h"
 #include "config_spdif.h"
 #include "config_cs42888.h"
-
+#include "config_sgtl5000.h"
 
 /* ALSA ports for IMX */
 #define PORT_MM     0
@@ -91,18 +91,20 @@
 #define PRODUCT_NAME_PROPERTY   "ro.product.name"
 #define PRODUCT_DEVICE_IMX      "imx"
 #define PRODUCT_DEVICE_AUTO     "sabreauto"
-#define SUPPORT_CARD_NUM        7
 
 /*"null_card" must be in the end of this array*/
-struct audio_card *audio_card_list[SUPPORT_CARD_NUM] = {
+struct audio_card *audio_card_list[] = {
     &wm8958_card,
     &wm8962_card,
     &hdmi_card,
     &usbaudio_card,
     &spdif_card,
     &cs42888_card,
+    &sgtl5000_card,
     &null_card,
 };
+
+#define SUPPORT_CARD_NUM        ARRAY_SIZE(audio_card_list)
 
 struct pcm_config pcm_config_mm_out = {
     .channels = 2,
