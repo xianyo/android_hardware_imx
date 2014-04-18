@@ -19,6 +19,7 @@
 #include "Ov5640Mipi.h"
 #include "Ov5642Csi.h"
 #include "Ov5640Csi.h"
+#include "Ov2656Csi.h"
 #include "TVINDevice.h"
 #include <stdlib.h>
 sp<DeviceAdapter>DeviceAdapter::Create(const CameraInfo& info)
@@ -44,6 +45,10 @@ sp<DeviceAdapter>DeviceAdapter::Create(const CameraInfo& info)
         FLOGI("DeviceAdapter: Create adv7180 device");
         devAdapter = new TVINDevice();
     }
+	else if (strstr(info.name, OV2656CSI_SENSOR_NAME)) {
+		FLOGI("DeviceAdapter: Create ov2656 csi device");
+		devAdapter = new Ov2656Csi();
+	} 
     else {
         devAdapter = new OvDevice();
         FLOGI("sensor %s does not support well now!", info.name);
