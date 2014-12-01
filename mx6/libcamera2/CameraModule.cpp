@@ -1,6 +1,6 @@
 /*
  * Copyright (C) Freescale - http://www.Freescale.com/
- * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -443,9 +443,11 @@ int GetDevPath(const char  *pCameraName,
                     if(strstr((const char*)v4l2_cap.driver, pCameraName)) {
                        if (pathLen > strlen(dev_node)) {
                             strcpy(pCameraDevPath, dev_node);
-                            ALOGI("Get sensor %s's dev path %s",
+                            ALOGI("Get sensor %s's dev path %s, card %s, driver %s",
                                   pCameraName,
-                                  pCameraDevPath);
+                                  pCameraDevPath,
+                                  (const char*)v4l2_cap.card,
+                                  (const char*)v4l2_cap.driver);
                             retCode = 0;
                         }
                         close(fd);
