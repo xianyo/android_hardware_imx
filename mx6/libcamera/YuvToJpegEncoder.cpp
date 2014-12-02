@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2008 The Android Open Source Project
- * Copyright (C) 2012-2013 Freescale Semiconductor, Inc.
+ * Copyright (C) 2012-2014 Freescale Semiconductor, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,6 +199,7 @@ int Yuv420SpToJpegEncoder::yuvResize(uint8_t *srcBuf,
     structConvImage o_img_ptr, i_img_ptr;
 
     // input
+    memset(&i_img_ptr, 0, sizeof(i_img_ptr));
     i_img_ptr.uWidth  =  srcWidth;
     i_img_ptr.uStride =  i_img_ptr.uWidth;
     i_img_ptr.uHeight =  srcHeight;
@@ -207,6 +208,7 @@ int Yuv420SpToJpegEncoder::yuvResize(uint8_t *srcBuf,
     i_img_ptr.clrPtr  = i_img_ptr.imgPtr + (i_img_ptr.uWidth * i_img_ptr.uHeight);
 
     // ouput
+    memset(&o_img_ptr, 0, sizeof(o_img_ptr));
     o_img_ptr.uWidth  = dstWidth;
     o_img_ptr.uStride = o_img_ptr.uWidth;
     o_img_ptr.uHeight = dstHeight;
