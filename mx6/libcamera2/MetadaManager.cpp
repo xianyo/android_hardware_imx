@@ -875,7 +875,8 @@ status_t MetadaManager::createStaticInfo(camera_metadata_t **info, bool sizeRequ
             availableAwbModes, sizeof(availableAwbModes));
 
     static const uint8_t availableAfModes[] = {
-            ANDROID_CONTROL_AF_MODE_OFF
+            ANDROID_CONTROL_AF_MODE_OFF,
+            ANDROID_CONTROL_AF_MODE_AUTO
     };
     ADD_OR_SIZE(ANDROID_CONTROL_AF_AVAILABLE_MODES,
                 availableAfModes, sizeof(availableAfModes));
