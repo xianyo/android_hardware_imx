@@ -74,6 +74,7 @@ using namespace android;
 #define OV5642CSI_SENSOR_NAME "ov5642_camera"
 #define OV5640CSI_SENSOR_NAME "ov5640_camera"
 #define ADV7180_TVIN_NAME "adv7180_decoder"
+#define TC358743_MIPI_NAME "tc358743_mipi"
 #define V4LSTREAM_WAKE_LOCK "V4LCapture"
 
 #define MAX_PREVIEW_BUFFER      8

@@ -20,6 +20,7 @@
 #include "Ov5640Mipi.h"
 #include "Ov5642Csi.h"
 #include "Ov5640Csi.h"
+#include "Tc358743.h"
 #include "TVINDevice.h"
 #include <stdlib.h>
 
@@ -64,6 +65,10 @@ sp<DeviceAdapter>DeviceAdapter::Create(const CameraInfo& info)
     else if (strstr(info.name, ADV7180_TVIN_NAME)) {
         FLOGI("DeviceAdapter: Create adv7180 device");
         devAdapter = new TVINDevice();
+    }
+    else if (strstr(info.name, TC358743_MIPI_NAME)) {
+        FLOGI("DeviceAdapter: Create tc358743 device");
+        devAdapter = new Tc358743();
     }
     else {
         devAdapter = new OvDevice();

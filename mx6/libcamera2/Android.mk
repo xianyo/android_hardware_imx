@@ -35,6 +35,7 @@ LOCAL_SRC_FILES:=    \
     Ov5640Mipi.cpp \
     Ov5642Csi.cpp \
     Ov5640Csi.cpp \
+    Tc358743.cpp \
     TVINDevice.cpp \
     UvcDevice.cpp \
     PhysMemAdapter.cpp \
