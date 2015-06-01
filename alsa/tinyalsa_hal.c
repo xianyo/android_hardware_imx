@@ -47,6 +47,7 @@
 #include "config_spdif.h"
 #include "config_cs42888.h"
 #include "config_sgtl5000.h"
+#include "config_tc358743.h"
 
 /* ALSA ports for IMX */
 #define PORT_MM     0
@@ -102,6 +103,7 @@ struct audio_card *audio_card_list[] = {
     &spdif_card,
     &cs42888_card,
     &sgtl5000_card,
+    &tc358743_card,
     &null_card,
 };
 
